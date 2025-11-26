@@ -53,4 +53,19 @@ const records = [
 const namespaceIndex = index.namespace("teste-1");
 
 // Persistindo meus dados
-await namespaceIndex.upsertRecords(records);
+// await namespaceIndex.upsertRecords(records);
+
+// Aguardar esse tempo é recomendado pela documentação para os dados serem inseridos no indice
+// E conseguirmos busca-los atualizados
+await new Promise(resolve => setTimeout(resolve, 10000));
+
+// Informações sobre nosso indice
+const stats = await namespaceIndex.describeIndexStats();
+
+// Ex.: Response do stats
+// {
+//   namespaces: { 'teste-1': { recordCount: 6 } },
+//   dimension: 1024,
+//   indexFullness: 0,
+//   totalRecordCount: 6
+// }
