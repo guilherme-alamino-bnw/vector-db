@@ -69,3 +69,57 @@ const stats = await namespaceIndex.describeIndexStats();
 //   indexFullness: 0,
 //   totalRecordCount: 6
 // }
+
+// Aqui podemos configurar para buscar por limite de palavras mais proximas (topK)
+// Podemos escolher qual campo nós queremos filtrar 
+// Podemos escolher para qual tipo de categoria queremos filtrar dentre outras possibilidades
+const searchWithText = await namespaceIndex.searchRecords({
+  query: {
+    topK: 4,
+    inputs: { text: 'é verdade que até o menor dos seres pode mudar o destino de todo um mundo ?' },
+  },
+  fields: ['text'],
+});
+
+// Ex.: Response do searchWithText
+// {
+//   namespaces: { 'teste-1': { recordCount: 6 } },
+//   dimension: 1024,
+//   indexFullness: 0,
+//   totalRecordCount: 6
+// }
+// {
+//   hits: [
+//     { _id: 'rec1', _score: 0.35028743743896484, fields: [Object] },
+//     { _id: 'rec2', _score: 0.1464015692472458, fields: [Object] },
+//     { _id: 'rec3', _score: 0.12342286109924316, fields: [Object] },
+//     { _id: 'rec6', _score: 0.1182040199637413, fields: [Object] }
+//   ]
+// }
+ 
+const results = searchWithText.result.hits
+
+results.forEach((element) => console.log(element))
+
+// Response do results
+// {
+//   _id: 'rec2',
+//   _score: 0.5625624656677246,
+//   fields: {
+//     text: 'Em O Senhor dos Anéis, a jornada pelo Anel demonstra como até o menor dos seres pode mudar o destino de todo um mundo.'
+//   }
+// }
+// {
+//   _id: 'rec4',
+//   _score: 0.1830027848482132,
+//   fields: {
+//     text: 'Os Vingadores mostram que grandes poderes só fazem sentido quando usados para proteger quem não pode lutar sozinho.'
+//   }
+// }
+// {
+//   _id: 'rec3',
+//   _score: 0.1658148467540741,
+//   fields: {
+//     text: "O universo de Avatar destaca a conexão dos Na'vi com a natureza, onde cada ser vivo participa de um grande ciclo espiritual."
+//   }
+// }
