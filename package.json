@@ -1,0 +1,24 @@
+{
+    "name": "vector-db",
+    "version": "1.0.0",
+    "description": "majestoso laboratorio",
+    "main": "index.js",
+    "type": "module",
+    "scripts": {
+      "start:pinecone": "node pinecone.js",
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/guilherme-alamino-bnw/vector-db.git"
+    },
+    "author": "GuilhermeAlamino",
+    "license": "ISC",
+    "bugs": {
+      "url": "https://github.com/guilherme-alamino-bnw/vector-db/issues"
+    },
+    "homepage": "https://github.com/guilherme-alamino-bnw/vector-db#readme",
+    "dependencies": {
+      "@pinecone-database/pinecone": "^6.1.3"
+    }
+}
