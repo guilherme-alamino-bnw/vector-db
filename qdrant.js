@@ -25,23 +25,36 @@ const client = new QdrantClient({
 // Eu já criei uma collection e se chama "my-collection-majestic"
 // Abaixo vamos usar a collection para armazenar um vetor + payload
 // Lembre-se que a quantidade do "vector" precisa ser o mesmo configurado para a "Collection"
-const operationInfo = await client.upsert("my-collection-majestic", {
-  wait: true,
-  points: [
-    { 
-        id: 7, 
-        vector: vector, 
-        payload: { 
-            city: "London", 
-            text: "Recipe for baking chocolate chip cookies" 
-        } 
-    }
-  ],
-});
+// const operationInfo = await client.upsert("my-collection-majestic", {
+//   wait: true,
+//   points: [
+//     { 
+//         id: 7, 
+//         vector: vector, 
+//         payload: { 
+//             city: "London", 
+//             text: "Recipe for baking chocolate chip cookies" 
+//         } 
+//     }
+//   ],
+// });
 
-console.log(operationInfo)
+// console.log(operationInfo)
 // Exemplo de resposta do operationInfo:
 // { 
 //     operation_id: 2, 
 //     status: 'completed' 
 // }
+
+// Busca vetorial na collection
+// Ele sempre vai trazer na primeira posição o que é mais perto do que você procura
+const search = await client.query("my-collection-majestic", {
+  query: vector,
+});
+
+console.log(search.points);
+// Exemplo de resposta do search:
+// [
+//   { id: 6, version: 3, score: 0.99999887 },
+//   { id: 7, version: 4, score: 0.91354406 }
+// ]
