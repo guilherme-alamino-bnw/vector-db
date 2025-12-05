@@ -5,20 +5,23 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-      "start:pinecone": "node pinecone.js",
-      "test": "echo \"Error: no test specified\" && exit 1"
+        "start:pinecone": "node pinecone.js",
+        "start:qdrant": "node qdrant.js",
+        "test": "echo \"Error: no test specified\" && exit 1"
     },
     "repository": {
-      "type": "git",
-      "url": "git+https://github.com/guilherme-alamino-bnw/vector-db.git"
+        "type": "git",
+        "url": "git+https://github.com/guilherme-alamino-bnw/vector-db.git"
     },
     "author": "GuilhermeAlamino",
     "license": "ISC",
     "bugs": {
-      "url": "https://github.com/guilherme-alamino-bnw/vector-db/issues"
+        "url": "https://github.com/guilherme-alamino-bnw/vector-db/issues"
     },
     "homepage": "https://github.com/guilherme-alamino-bnw/vector-db#readme",
     "dependencies": {
-      "@pinecone-database/pinecone": "^6.1.3"
+        "@pinecone-database/pinecone": "^6.1.3",
+        "@qdrant/js-client-rest": "^1.16.1",
+        "openai": "^6.9.1"
     }
 }
