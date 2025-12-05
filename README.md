@@ -131,3 +131,134 @@ Limite de 2 Milhões de escritas (mensal), inserções, atualizações e deletes
 * Vetores densos e Vetores esparsos: https://www.pinecone.io/learn/sparse-retrieval/
 
 * Vector DB: https://www.pinecone.io/learn/vector-database/
+
+---
+# Vector DB – Qdrant
+
+O Qdrant é um banco de dados vetorial open-source e oferece muito suporte para rodar em cloud propria e das seguintes maneiras:
+- rodar **localmente**
+    - No Ambiente local é disponibilizado as seguintes interfaces:
+    - REST API: localhost:6333
+    - Web UI: localhost:6333/dashboard
+    - GRPC API: localhost:6334
+- rodar em **servidores próprios**
+- rodar em **clusters dedicados**
+- usar o **Qdrant Cloud**, se quiser
+
+Ao utiliza-lo não senti tanta facilidade igual o "Pinecone", ele oferece muitas maneiras de criar uma collection para armazenar informações:
+
+- Oferecendo ampla variações para "vetorização esparsa", por oferecer tantas opções achei bastante confuso inicialmente.
+- Você pode usa-la para armazenar collections sem precisar vetorizar, sendo as opções de uma collection tracional (chave e valor) ou em vetores.
+- Não contem "incorporação integrada" no plano inicial (padrão), eles chamam de "inferência" é necessario contratar um plano com servidor dedicado para "incorporação integrada"(não foi testado) apartir de $31 dolar.
+- Dificil achar exemplos que usam a vetorização automatica. 
+    - O que achei de positivo é que oferece um "Dashboard" para configurações.
+    - O que achei de negativo primordialmente é que são muitas configurações, e a documentação não é tão intuitiva igual a "Pinecone".
+
+---
+
+## Dimensões
+
+As dimensões das "Collections" precisam ser iguais com os modelos de incorporação da OpenAI como por exemplo:
+
+```txt
+Ex.: 512 | 1536 | 3072...
+```
+
+Aqui estou usando um modelo da openAI para fazer a incorporação dos textos:
+
+```js
+const text = "Recipe for baking chocolate chip";
+
+const embedding = await openai.embeddings.create({
+    model: "text-embedding-3-large",
+    input: text,
+    dimensions : 3072
+});
+
+const vector = embedding.data[0].embedding;
+
+```
+- Não podemos ter uma dimensão 3072 de incorporação da OpenAI, e nossa "Collection" for configurada para 512.
+
+
+## Vetorização
+
+O Qdrant **não faz o embeddings sozinho** no plano padrão. eles chamam esse recurso de **inferência**, e está apenas disponível em planos com servidor dedicados.
+
+Testei a vetorização densa dessa maneira:
+- ✔ Gerando embeddings antes  
+- ✔ Enviando ao Qdrant com os vetores já prontos
+
+Uma maneira simples de inserir os dados + vetores:
+```js
+const operationInfo = await client.upsert("{collection_name}", {
+  wait: true,
+  points: [
+    { 
+        id: 5, 
+        vector: vector, 
+        payload: { 
+            city: "London", 
+            text: "Recipe for baking chocolate chip" 
+        } 
+    }
+  ],
+});
+```
+
+## Armazenamento 
+Quando uma instancia é compartilhada para varios usuário eles sugerem que você use da seguinte maneira:
+- Crie uma chave com um nome exemplo essa está como "group_id" é um identificador para conseguir filtrar posteriormente, mas você pode escolher um nome melhor.. 
+- Quando quiser armazenar para um usuário especifico só passar dessa maneira:
+```js
+client.upsert("{collection_name}", {
+    points: [
+        {
+            id: 1,
+            payload: { group_id: "user_1" },
+            vector: [0.9, 0.1, 0.1],
+        },
+        {
+            id: 2,
+            payload: { group_id: "user_1" },
+            vector: [0.1, 0.9, 0.1],
+        },
+        {
+            id: 3,
+            payload: { group_id: "user_2" },
+            vector: [0.1, 0.1, 0.9],
+        },
+    ]
+})
+```
+
+Uma sugestão é que devemos usar o parametro "is_tenant" para evitar a degradação de desempenho e instabilidades no cluster e alto custos, entre outras tecnicas de sharding.
+```js
+ client.createPayloadIndex("{collection_name}", {
+    field_name: "group_id",
+    field_schema: {
+        type: "keyword",
+        is_tenant: true,
+    },
+});
+```
+
+# Limites do plano padrão
+
+```
+Provider : AWS (eu-west-2)
+
+RAM: 1 GiB
+
+vCPUs (Processamento virutal): 0,5 vCPU
+
+DISK (Espaço em disco): 4 GiB
+
+```
+
+# Material de apoio:
+* Inferência: https://qdrant.tech/documentation/concepts/inference/
+
+* Operações multi-tenant: https://qdrant.tech/documentation/concepts/indexing/#tenant-index
+
+* Vetores do DB: https://qdrant.tech/documentation/concepts/vectors/
