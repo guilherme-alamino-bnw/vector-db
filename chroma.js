@@ -11,3 +11,19 @@ const client = new CloudClient({
     tenant: 'ae4c5127-f37a-4b79-b018-fc21f9c424c0',
     database: 'majestic-lab'
 });
+
+// Pega ou Cria a Collection para armazenar dados
+const collection = await client.getOrCreateCollection({
+    name: "my-collection"
+});
+
+// Inserção dos dados com um identificador (id)
+// Aqui a incorporação integrada já acontence com os textos
+// Se você tentar adicionar duas vezes os mesmos "id" com os "documents" ele não aceita a mudança de estado.
+await collection.add({
+  ids: ["id7", "id8"],
+  documents: [
+    "This is a document about ta",
+    "This is a document about tu",
+  ],
+});
