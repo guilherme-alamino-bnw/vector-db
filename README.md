@@ -262,3 +262,115 @@ DISK (Espaço em disco): 4 GiB
 * Operações multi-tenant: https://qdrant.tech/documentation/concepts/indexing/#tenant-index
 
 * Vetores do DB: https://qdrant.tech/documentation/concepts/vectors/
+
+---
+
+# Vector DB – ChromaDB
+
+O Chorma é um banco de dados vetorial bem similiar aos que eu mencionei anteriormente e achei ele bem parecido com o "pinecone" nas seguintes opções: 
+- Interface bastante intuitiva
+- Fácil de configurar e usar
+- Você tambem pode rodar em cloud propria ou em nuvem.
+- O SDK do Chroma tem suporte a bastante linguagens e frameworks inclusive para o Laravel. 
+- Vetorização nativa (dense e sparse), similar ao Pinecone.
+  - Dimensão maxima de incorporação: 4.096
+
+## Tipos de Client
+Dito isto, ele pontua que você pode trabalhar o executando das seguintes maneiras:
+- Cliente Efêmero: atua com operações em memoria a persistir é temporária 
+- Cliente Chroma: atua com persistênia em um banco de dados local
+- Cliente Chorma Cloud: atua com persistência em um banco de dados em nuvem
+
+## Armazenamento 
+Nas credências iniciais achei tipico você passar o tenant de cara e o mesmo será usado para armazenar as informações nas collections segue exemplo:
+- O modelo de tenant do Chroma é mais rígido que o namespace do Pinecone.
+- Cada database é isolado por tenant, mas você pode criar múltiplos databases para o mesmo tenant.
+```js
+const client = new ChromaClient({
+  tenant: "your-tenant",
+  database: "your-database",
+  auth: { provider: "token", credentials: "your-api-key" }
+});
+```
+Vendo isso me parece que só podemos ter um tenant para cada database, ou seja para usar multi-tenant em um database precisamos usar o campo "metadatas" para consegui filtrar os tenants, mas continuo vendo semalhanças com o "Pinecone", mas o Pinecone tem 1 nivel de abstração separando os tenants por namespace e o ChromaDB não tem esse nivel de abstração, segue exemplo:
+```js
+await collection.add({
+  ids: ["id1", "id2"],
+  documents: ["Document 1", "Document 2"],
+  metadatas: [
+    { tenant_id: "tenantA" },
+  ]
+});
+```
+- O incorporador para vetor esparso usado por padrão oferece correspondencia por palavras-chaves e termos e não similiaridade semantica, o usado em questão é o BM25 e é extremamente usado para buscas esparsas.
+
+## Forks de Collections
+Oferece suporte a Fork nas Collections onde você pode usar uma collection somente para escritas e uma copy da mesma somente para leitura, é cobrado $0,03 por Fork.
+
+## Interação com o Database
+Nas interações com o database ele segue a sintaxe no estilo (mongoDB):
+- $and, $or
+- $eq, $in, $contains
+
+## Vetorização
+
+Na Inserção de dados no Chroma eles usam um modelo de incorporação integrada, isso facilita muito.. e bem parecido com o "Pinecone" tambem. 
+
+Já não precisamos nos preocupar em fazer embeddings manualmente antes, mas ele tambem oferece possibilidade para trazer os vetores ou gerar os vetores com algum outro modelo especifico.
+
+### Vetor Denso
+- Usando apenas interface chromadb ele ira vetorizar de maneira densa, segue exemplo abaixo:
+```js
+import { ChromaClient } from "chromadb";
+const client = new ChromaClient();
+
+const collection = await client.getOrCreateCollection({
+  name: "my_collection",
+});
+
+await collection.upsert({
+  documents: [
+    "This is a document about pineapple",
+    "This is a document about oranges",
+  ],
+  ids: ["id1", "id2"],
+});
+```
+### Vetor Esparso
+-  Usando a interface "ChromaBm25EmbeddingFunction" ele ira fazer a vetorização esparsa:
+- O incorporador para vetor esparso usado por padrão oferece correspondencia por palavras-chaves e termos, e não similiaridade semantica, o usado em questão é o BM25 e é extremamente usado para buscas esparsas.
+```js
+import { ChromaBm25EmbeddingFunction } from "@chroma-core/chroma-bm25";
+
+const embedder = new ChromaBm25EmbeddingFunction({
+  k: 1.2,
+  b: 0.75,
+  avgDocLength: 256.0,
+  tokenMaxLength: 40,
+});
+
+const sparseEmbeddings = await embedder.generate(["document1", "document2"]);
+
+const collection = await client.createCollection({
+  name: "name",
+  embeddingFunction: embedder,
+});
+```
+
+## Limites do plano padrão
+
+O plano é baseado em uso e segue as especificações:
+- Oferece somente 10 Banco de dados
+- Limite de $0,33 por GB de armazenamento no plano padrão (free)'
+- Limite de $2,50  por GB usado nas escritas (mensal), inserções, atualizações
+- Limite de $0,0075 por GB (mensal), consultas no plano padrão (free)
+
+## Material de apoio:
+
+Uso de metadados para realizar filtro: https://docs.trychroma.com/cloud/search-api/overview?lang=typescript#feature-comparison
+
+Copy-On-Write Forks: https://docs.trychroma.com/cloud/features/collection-forking#how-it-works 
+
+Multi-tenant: https://docs.trychroma.com/docs/overview/data-model#tenants
+
+Interações com o Banco: https://docs.trychroma.com/cloud/search-api/overview?lang=typescript#feature-comparison
