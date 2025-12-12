@@ -27,3 +27,26 @@ await collection.add({
     "This is a document about tu",
   ],
 });
+
+// As busca podem ser feitas em Textos puros e com vetores igualmente a outros serviços.
+const searchResult = await collection.query({
+  queryTexts: ["This is a document about ta"],
+});
+
+console.log(searchResult);
+// QueryResult {
+//   distances: [ [ 0, 0.6589594, 0.7905997, 0.96142495 ] ],
+//   documents: [
+//     [
+//       'This is a document about ta',
+//       'This is a document about t',
+//       'This is a document about tu',
+//       'This is a document about u'
+//     ]
+//   ],
+//   embeddings: [],
+//   ids: [ [ 'id7', 'id5', 'id8', 'id6' ] ],
+//   include: [ 'metadatas', 'documents', 'distances' ],
+//   metadatas: [ [ null, null, null, null ] ],
+//   uris: []
+// }
