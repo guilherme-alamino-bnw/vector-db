@@ -374,3 +374,121 @@ Copy-On-Write Forks: https://docs.trychroma.com/cloud/features/collection-forkin
 Multi-tenant: https://docs.trychroma.com/docs/overview/data-model#tenants
 
 Interações com o Banco: https://docs.trychroma.com/cloud/search-api/overview?lang=typescript#feature-comparison
+
+---
+# Vector DB – PGVector
+
+PGVector é uma extensão habilitada no PostgreSql para que seja possivel trabalhar com vetores, bom.. é um banco de dados bastante parrudo. desde o inicio oferece mecanismos para trabalhar muito bem com alta volumetria de dados.
+
+Você pode trabalhar com ele em: 
+- **servidores próprios**
+- **cloud**
+- **ambiente local**
+
+Ele oferece uma interface visual rica para configurar os mecanismos.. eu achei particularmente um pouco confuso, porque existem muitos recursos expostos na plataforma. acabei optando por configurar via CLI.
+
+Mas acabei usando a interface para analisar as métricas de requisições, processamento das funções e gatilhos criados, ela oferece extrema visibilidade sobre o funcionamento dos tais mencionados.
+
+## CLI
+
+A CLI é importante para o desenvolvimento, é uma ferramenta que permite você fazer as seguintes configurações necessárias:
+- configurar seu código local com o projeto em nuvem.
+- subir as implementações do ambiente local para a nuvem, semelhante ao comando "git remote add origin".
+- implementar funções e testar no seu proprio ambiente local
+
+Na minha percepção a documentação não foi tão clara sobre o requisito obrigatório é "configurar a cli", entretanto segue o passo a passo para isso:
+
+Documentação sugere usar o gerenciador de pacotes "brew":
+```bash
+brew install supabase/tap/supabase
+```
+
+Gerar as pastas para o desenvolvimento segue comando:
+```bash
+supabase init
+```
+
+Comando para iniciar o projeto em Docker:
+```bash
+supabase start
+```
+
+Vamos fazer login no CLI agora:
+```bash
+supabase login
+```
+
+Conectar o seu ambiente local ao ambiente Supabase Hospedado:
+```bash
+supabase link --project-ref ********************
+```
+A referência você encontra em "project settings -> general -> project ID".
+
+## Vetorização
+Para um sistema de vetorização incorporada o "Supabase" recomenda que usemos os seguintes mecanismo para conseguir as execuções mais proximas ao usuário.
+
+- pgvector - para armazenar e fazer consultas vetoriais
+- pgmq - fila para processamento e novas tentativas
+- pg_net - lida com solicitações assincronas
+- pg_cron - processa e tenta novamente automaticamente a incorporação vetorial
+- gatilhos - detecta alterações de conteúdo e enfileira as solicitação para a gerração de conteudo.
+- funções de borda - gera os embeddings por meio de uma api para os embeddings (Edge Functions executadas em Deno)
+
+Nós podemos projetar de maneira generica para utilizar em varios outros locais os seguintes mecanismo:
+- função de borda
+- pgmq
+
+## Armazenamento 
+Para realizar o armazenamento precisamos automatizar os embeddings sempre que o conteudo for inserido ou atualizado. para isso não vamos fazer parecido com as outras bibliotecas já mencionadas aqui. precisamos usar gatilhos e filas para isso. com isso ganhamos os seguintes beneficios.
+
+- enfileiramento automático.
+- uma cron job que sempre vai processar o que foi enfileirado de forma assincrona.
+- se falhar ele permanece na fila e será repetido.
+- resilência a falhas
+
+### Funções para armazenamento 
+Você pode criar as suas funções programaticamente com esse comando:
+
+```bash
+supabase functions new [name-function]
+```
+Isso criara na raiz do projeto uma função.
+
+Nela você implementa em JS a conexão com o banco de dados + operação de embedding com a API externa. e cria o código responsavel por operar em Fila. após isso precisamos subir a função para funcionar na "nuvem" segue o comando.
+
+Antes de subir para a nuvem, precisamos executar e gerar o .env com apenas 1 informação inicialmente necessária:
+- OPENAI_API_KEY=your-api-key
+
+```bash
+supabase secrets set --env-file .env
+```
+
+A CLI vai informar a você que precisa instlar o Deno, e para melhor desempenho utilize via shell.
+
+```sh
+curl -fsSL https://deno.land/install.sh | sh
+```
+
+Depois de criar sua função você pode enviar requisições via post para sua função para testar, se estiver rodando localmente você precisa rodar a função sem "JWT", por padrão o JWT é habiltiado.
+
+```bash
+supabase functions serve --no-verify-jwt
+```
+
+## Limites do plano padrão
+
+Os projetos grátuitos são pausados após 1 semana de inatividade
+- 2 Projetos ativos
+- Oferece 50.000 usuários ativos mensais
+- CPU compartilhada e o tamanho do banco é 500MB
+- 1 GB de aramzenamento de arquivos
+- saida em cache de 5GB
+- saida de 5GB 
+
+## Material de apoio:
+
+Comando da CLI: https://supabase.com/docs/reference/cli/global-flags
+
+Vetorização automática: https://supabase.com/docs/guides/ai/automatic-embeddings?queryGroups=database-method&database-method=dashboard 
+
+Javascript + Postgre: https://supabase.com/docs/reference/javascript/initializing
