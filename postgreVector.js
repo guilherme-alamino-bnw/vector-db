@@ -15,3 +15,19 @@ const supabase = createClient(
 // const { error } = await supabase
 //   .from("majestic_lab")
 //   .insert({ id: 1, embedding: vectorExample, content: "Mordor" });
+
+// Acessando o banco e consultando os dados inseridos
+// Claro aqui eu posso realizar varios tipos de filtros.
+// const { data, error } = await supabase
+//   .from('majestic_lab')
+//   .select()
+
+// console.log(data);
+// Sem resultado = []
+// Com Resultado = [
+//   {
+//     id: 1,
+//     content: 'Mordor',
+//     embedding: '[0.12,0.87,0.45,0.33,0.91,0.04,0.68,0.56,0.29,0.75]'
+//   }
+// ]
